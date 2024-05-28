@@ -1,5 +1,6 @@
 module CSharpLanguageServer.Tests.InitializationTests
 
+open System
 open System.IO
 open System.Text
 
@@ -28,10 +29,32 @@ let testServerInitializes () =
           )
         ]
 
-    let testFn (stdin: Stream) (stdout: StreamReader) = task {
-        do! stdin.WriteAsync(Encoding.UTF8.GetBytes("{}"))
-        let! input = stdout.ReadLineAsync()
-        printfn "input=%s" input
+    let testFn (serverStdin: Stream)
+               = task {
+        let thisProcessId = System.Diagnostics.Process.GetCurrentProcess().Id
+
+        let initRequest =
+          sprintf """"{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"processId": %d}}\n"""
+                  thisProcessId
+
+        do! serverStdin.WriteAsync(Encoding.UTF8.GetBytes(initRequest))
+        do! serverStdin.FlushAsync();
+
+(*
+        do Console.Error.WriteLine("ReadLineAsync...");
+        let! stdout = serverStdout.ReadToEndAsync()
+        do Console.Error.WriteLine("ReadLineAsync, done, stdout.Length={0}...", stdout.Length);
+        printfn "stdout=%s" stdout
+
+        let! stderr = serverStderr.ReadToEndAsync()
+        do Console.Error.WriteLine("ReadLineAsync, done, stderr.Length={0}...", stderr.Length);
+        printfn "stderr=%s" stderr
+
+        do Console.Error.WriteLine("ReadLineAsync...");
+        let! stdout = serverStdout.ReadToEndAsync()
+        do Console.Error.WriteLine("ReadLineAsync, done, stdout.Length={0}...", stdout.Length);
+        printfn "stdout=%s" stdout
+*)
     }
 
     withServer projectFiles testFn

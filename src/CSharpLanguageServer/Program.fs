@@ -13,6 +13,8 @@ open CSharpLanguageServer.Lsp
 
 [<EntryPoint>]
 let entry args =
+    Console.Error.WriteLine("entry")
+
     try
         let argParser = ArgumentParser.Create<Options.CLIArguments>(programName = "csharp-ls")
         let serverArgs = argParser.Parse args

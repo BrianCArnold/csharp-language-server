@@ -43,6 +43,14 @@ let rec deleteDirectory (path: string) =
                 deleteDirectory item)
         Directory.Delete(path)
 
+let readStream (input: Stream) =
+    let buffer = new MemoryStream()
+    async {
+        do! input.CopyToAsync(buffer) |> Async.AwaitTask
+        buffer.Position <- 0L
+        return buffer
+    }
+
 let withServer (fileMap: Map<string, string>) contextFn =
     let projectTempDir = writeProjectDir fileMap
 
@@ -60,6 +68,8 @@ let withServer (fileMap: Map<string, string>) contextFn =
 
     let serverFileName =
         Path.Combine(baseDir, "src", "CSharpLanguageServer", "bin", buildMode, tfm, "CSharpLanguageServer")
+
+    let serverFileName = "/Users/bob/echo.py"
 
     Assert.IsTrue(File.Exists(serverFileName))
 
@@ -80,7 +90,7 @@ let withServer (fileMap: Map<string, string>) contextFn =
         p.Start() |> ignore
 
         // ensure we progress here
-        let testTimeoutSecs: int = 1
+        let testTimeoutSecs: int = 3
         let timer = new Timer(testTimeoutSecs * 1000)
         let mutable killed = false
 
@@ -90,22 +100,33 @@ let withServer (fileMap: Map<string, string>) contextFn =
             killed <- true
         )
 
-        timer.Start()
+        let stdoutBuffer = readStream p.StandardOutput.BaseStream
+        let stderrBuffer = readStream p.StandardError.BaseStream
 
-        use reader = new StreamReader(p.StandardOutput.BaseStream)
+        timer.Start()
 
         try
             try
-                do! contextFn p.StandardInput.BaseStream reader
+                do! contextFn p.StandardInput.BaseStream
             finally
                 p.Kill()
 
                 p.WaitForExit()
 
                 if killed then
-                    (sprintf "withServer: Timeout of %d secs was reached, killing the process.." testTimeoutSecs)
+                    (sprintf "withServer: Timeout of %d secs was reached, the process was killed!" testTimeoutSecs)
                     |> Exception
                     |> raise
         finally
             deleteDirectory projectTempDir
+
+        let! stdoutBuffer0 = stdoutBuffer
+        let stdout = Encoding.UTF8.GetString(stdoutBuffer0.ToArray())
+        Console.Write("stderr={0}", stdout)
+
+        let! stderrBuffer0 = stderrBuffer
+        let stderr = Encoding.UTF8.GetString(stderrBuffer0.ToArray())
+        Console.Write("stderr={0}", stderr)
+
+        Assert.IsFalse(true)
     }
