@@ -61,10 +61,13 @@ let withServer (fileMap: Map<string, string>) contextFn =
         |> Path.GetDirectoryName
         |> Path.GetDirectoryName
 
-    let serverFileName =
+    let baseServerFileName =
         Path.Combine(baseDir, "src", "CSharpLanguageServer", "bin", buildMode, tfm, "CSharpLanguageServer")
 
-    //let serverFileName = "/Users/bob/echo.py"
+    let serverFileName =
+        match System.Environment.OSVersion.Platform with
+        | PlatformID.Win32NT -> baseServerFileName + ".exe"
+        | _ -> baseServerFileName
 
     Assert.IsTrue(File.Exists(serverFileName))
 
