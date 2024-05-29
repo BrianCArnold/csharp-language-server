@@ -29,16 +29,19 @@ let testServerInitializes () =
           )
         ]
 
-    let testFn (serverStdin: Stream)
+    let testFn projectDir (serverStdin: StreamWriter)
                = task {
         let thisProcessId = System.Diagnostics.Process.GetCurrentProcess().Id
 
         let initRequest =
-          sprintf """"{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"processId": %d}}\n"""
+          sprintf """{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"processId": %d, "rootUri": "%s", "capabilities": {}, "trace": "off"}}"""
                   thisProcessId
+                  (sprintf "file://%s" projectDir)
 
-        do! serverStdin.WriteAsync(Encoding.UTF8.GetBytes(initRequest))
-        do! serverStdin.FlushAsync();
+        do! serverStdin.WriteLineAsync(
+          String.Format("Content-Length: {0}\r\n\r\n{1}\r\n", initRequest.Length, initRequest))
+
+        do! serverStdin.FlushAsync()
 
 (*
         do Console.Error.WriteLine("ReadLineAsync...");

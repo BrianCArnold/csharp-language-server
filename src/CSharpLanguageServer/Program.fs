@@ -57,7 +57,11 @@ let entry args =
             LogLevel = logLevelArg
         }
 
-        Server.start settings
+        let res = Server.start settings
+
+        Console.Error.WriteLine("exit; res={0}", res)
+
+        res
     with
     | :? ArguParseException as ex ->
         printfn "%s" ex.Message

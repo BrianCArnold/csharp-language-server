@@ -5,6 +5,7 @@ open System.IO
 open System.Diagnostics
 open System.Text
 open System.Timers
+open System.Threading
 
 open NUnit.Framework
 
@@ -33,6 +34,7 @@ let writeProjectDir (fileMap: Map<string, string>) : string =
 
     tempDir
 
+
 let rec deleteDirectory (path: string) =
     if Directory.Exists(path) then
         Directory.GetFileSystemEntries(path)
@@ -43,13 +45,6 @@ let rec deleteDirectory (path: string) =
                 deleteDirectory item)
         Directory.Delete(path)
 
-let readStream (input: Stream) =
-    let buffer = new MemoryStream()
-    async {
-        do! input.CopyToAsync(buffer) |> Async.AwaitTask
-        buffer.Position <- 0L
-        return buffer
-    }
 
 let withServer (fileMap: Map<string, string>) contextFn =
     let projectTempDir = writeProjectDir fileMap
@@ -69,13 +64,12 @@ let withServer (fileMap: Map<string, string>) contextFn =
     let serverFileName =
         Path.Combine(baseDir, "src", "CSharpLanguageServer", "bin", buildMode, tfm, "CSharpLanguageServer")
 
-    let serverFileName = "/Users/bob/echo.py"
+    //let serverFileName = "/Users/bob/echo.py"
 
     Assert.IsTrue(File.Exists(serverFileName))
 
     let processStartInfo = new ProcessStartInfo()
     processStartInfo.FileName <- serverFileName
-//    processStartInfo.Arguments <- arguments
     processStartInfo.RedirectStandardInput <- true
     processStartInfo.RedirectStandardOutput <- true
     processStartInfo.RedirectStandardError <- true
@@ -83,34 +77,36 @@ let withServer (fileMap: Map<string, string>) contextFn =
     processStartInfo.CreateNoWindow <- true
     processStartInfo.WorkingDirectory <- projectTempDir
 
+    printfn "serverFileName=%s" serverFileName
+
     task {
         use p = new Process()
         p.StartInfo <- processStartInfo
 
-        p.Start() |> ignore
+        let startResult = p.Start()
+        Assert.IsTrue(startResult)
 
         // ensure we progress here
         let testTimeoutSecs: int = 3
-        let timer = new Timer(testTimeoutSecs * 1000)
+        let timer = new System.Timers.Timer(testTimeoutSecs * 1000)
         let mutable killed = false
 
         timer.Elapsed.Add(fun _ ->
             timer.Stop()
+            Console.Error.WriteLine("timer.Ellapsed: p.Kill()")
             p.Kill()
             killed <- true
         )
 
-        let stdoutBuffer = readStream p.StandardOutput.BaseStream
-        let stderrBuffer = readStream p.StandardError.BaseStream
+        let stdoutReadTask = p.StandardOutput.ReadToEndAsync()
+        let stderrReadTask = p.StandardError.ReadToEndAsync()
 
         timer.Start()
 
         try
             try
-                do! contextFn p.StandardInput.BaseStream
+                do! contextFn projectTempDir p.StandardInput
             finally
-                p.Kill()
-
                 p.WaitForExit()
 
                 if killed then
@@ -120,13 +116,13 @@ let withServer (fileMap: Map<string, string>) contextFn =
         finally
             deleteDirectory projectTempDir
 
-        let! stdoutBuffer0 = stdoutBuffer
-        let stdout = Encoding.UTF8.GetString(stdoutBuffer0.ToArray())
-        Console.Write("stderr={0}", stdout)
+            let stdout = stdoutReadTask.Result
+            Console.WriteLine("stdout={0}", stdout)
 
-        let! stderrBuffer0 = stderrBuffer
-        let stderr = Encoding.UTF8.GetString(stderrBuffer0.ToArray())
-        Console.Write("stderr={0}", stderr)
+            let stderr = stderrReadTask.Result
+            Console.WriteLine("stderr={0}", stderr)
+
+            Console.WriteLine("exit code={0}", p.ExitCode)
 
         Assert.IsFalse(true)
     }
