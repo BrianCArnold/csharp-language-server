@@ -29,6 +29,13 @@ let testServerInitializes () =
           )
         ]
 
+    let sendMessageRaw (serverStdin: StreamWriter) (m: string) = task {
+        do! serverStdin.WriteAsync(
+          String.Format("Content-Length: {0}\r\n\r\n{1}", m.Length, m))
+
+        do! serverStdin.FlushAsync()
+      }
+
     let testFn projectDir (serverStdin: StreamWriter)
                = task {
         let thisProcessId = System.Diagnostics.Process.GetCurrentProcess().Id
@@ -38,26 +45,7 @@ let testServerInitializes () =
                   thisProcessId
                   (sprintf "file://%s" projectDir)
 
-        do! serverStdin.WriteAsync(
-          String.Format("Content-Length: {0}\r\n\r\n{1}", initRequest.Length, initRequest))
-
-        do! serverStdin.FlushAsync()
-
-(*
-        do Console.Error.WriteLine("ReadLineAsync...");
-        let! stdout = serverStdout.ReadToEndAsync()
-        do Console.Error.WriteLine("ReadLineAsync, done, stdout.Length={0}...", stdout.Length);
-        printfn "stdout=%s" stdout
-
-        let! stderr = serverStderr.ReadToEndAsync()
-        do Console.Error.WriteLine("ReadLineAsync, done, stderr.Length={0}...", stderr.Length);
-        printfn "stderr=%s" stderr
-
-        do Console.Error.WriteLine("ReadLineAsync...");
-        let! stdout = serverStdout.ReadToEndAsync()
-        do Console.Error.WriteLine("ReadLineAsync, done, stdout.Length={0}...", stdout.Length);
-        printfn "stdout=%s" stdout
-*)
+        do! sendMessageRaw serverStdin initRequest
     }
 
     withServer projectFiles testFn
