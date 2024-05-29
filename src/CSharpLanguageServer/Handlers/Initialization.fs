@@ -25,6 +25,9 @@ module Initialization =
                          (context: ServerRequestContext)
                          (p: InitializeParams)
             : Async<LspResult<InitializeResult>> = async {
+
+        Console.Error.WriteLine("Handlers.Initialization:handleInitialize")
+
         // context.State.LspClient has not been initialized yet thus context.WindowShowMessage will not work
         let windowShowMessage m = lspClient.WindowShowMessage({ Type = MessageType.Info; Message = m })
 

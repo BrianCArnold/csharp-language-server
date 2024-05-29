@@ -38,8 +38,8 @@ let testServerInitializes () =
                   thisProcessId
                   (sprintf "file://%s" projectDir)
 
-        do! serverStdin.WriteLineAsync(
-          String.Format("Content-Length: {0}\r\n\r\n{1}\r\n", initRequest.Length, initRequest))
+        do! serverStdin.WriteAsync(
+          String.Format("Content-Length: {0}\r\n\r\n{1}", initRequest.Length, initRequest))
 
         do! serverStdin.FlushAsync()
 

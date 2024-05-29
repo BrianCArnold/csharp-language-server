@@ -184,11 +184,13 @@ type CSharpLspServer(
         override __.Dispose() = ()
 
         override __.Initialize(p) =
-            Console.Error.WriteLine("Initialize()")
+            Console.Error.WriteLine("Initialize(p)")
             let serverCapabilities = getServerCapabilities p
+            Console.Error.WriteLine("Initialize(p): serverCapabilities: {0}", serverCapabilities)
             p |> withReadWriteContext (Initialization.handleInitialize lspClient setupTimer serverCapabilities)
 
         override __.Initialized(p) =
+            Console.Error.WriteLine("Initialized(p)")
             p |> withReadWriteContext (Initialization.handleInitialized lspClient stateActor getRegistrations)
               |> ignoreResult
 
