@@ -117,6 +117,10 @@ module Initialization =
 
             // TODO: Retry on error?
             try
+                logger.trace (
+                    Log.setMessage "handleInitialized: registering capabilities with the client.."
+                )
+
                 match! lspClient.ClientRegisterCapability registrationParams with
                 | Ok _ -> ()
                 | Error error ->
@@ -134,6 +138,10 @@ module Initialization =
             //
             // retrieve csharp settings
             //
+            logger.trace (
+                Log.setMessage "handleInitialized: retrieving 'csharp' workspace configuration section"
+            )
+
             try
                 let! workspaceCSharpConfig =
                     lspClient.WorkspaceConfiguration(

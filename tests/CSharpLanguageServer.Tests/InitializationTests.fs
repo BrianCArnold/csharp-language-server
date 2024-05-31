@@ -46,6 +46,15 @@ let testServerInitializes () =
                   (sprintf "file://%s" projectDir)
 
         do! sendMessageRaw serverStdin initRequest
+
+        do System.Threading.Thread.Sleep(1000)
+
+        let initializedRequest =
+          sprintf """{"jsonrpc":"2.0","id":2,"method":"initialized","params":{}}"""
+
+        do! sendMessageRaw serverStdin initializedRequest
+
+        ()
     }
 
     withServer projectFiles testFn
