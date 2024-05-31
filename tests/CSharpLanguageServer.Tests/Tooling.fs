@@ -90,7 +90,7 @@ let withServer (fileMap: Map<string, string>) contextFn =
         Assert.IsTrue(startResult)
 
         // ensure we progress here
-        let testTimeoutSecs: int = 3
+        let testTimeoutSecs: int = 10
         let timer = new System.Timers.Timer(testTimeoutSecs * 1000)
         let mutable killed = false
 

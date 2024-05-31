@@ -59,7 +59,7 @@ let entry args =
 
         let res = Server.start settings
 
-        Console.Error.WriteLine("exit; res={0}", res)
+        Console.Error.WriteLine("exit; res={0}; timestamp={1}", res, DateTime.Now)
 
         res
     with

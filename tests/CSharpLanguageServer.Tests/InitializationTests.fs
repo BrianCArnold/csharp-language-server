@@ -47,12 +47,37 @@ let testServerInitializes () =
 
         do! sendMessageRaw serverStdin initRequest
 
-        do System.Threading.Thread.Sleep(1000)
+        do System.Threading.Thread.Sleep(250)
 
         let initializedRequest =
           sprintf """{"jsonrpc":"2.0","id":2,"method":"initialized","params":{}}"""
 
         do! sendMessageRaw serverStdin initializedRequest
+
+        do System.Threading.Thread.Sleep(250)
+
+        let clientRegisterCapResponse =
+          sprintf """{"jsonrpc":"2.0","id":2,"result":null}"""
+
+        do! sendMessageRaw serverStdin clientRegisterCapResponse
+
+        do System.Threading.Thread.Sleep(250)
+
+        let workspaceConfigResponse =
+          sprintf """{"jsonrpc":"2.0","id":3,"result":[]}"""
+
+        do! sendMessageRaw serverStdin workspaceConfigResponse
+
+        do System.Threading.Thread.Sleep(250)
+
+        let workDoneProgressResponse =
+          sprintf """{"jsonrpc":"2.0","id":4,"result":null}"""
+
+        do! sendMessageRaw serverStdin workDoneProgressResponse
+
+        printf "sleeping for 5 secs; %s ..\n" (string DateTime.Now)
+        do System.Threading.Thread.Sleep(5 * 1000)
+        printf "sleeping for 5 secs -- done; %s ..\n" (string DateTime.Now)
 
         ()
     }

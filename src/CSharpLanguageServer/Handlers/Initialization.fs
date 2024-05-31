@@ -183,6 +183,9 @@ module Initialization =
             //
             // start loading the solution
             //
+            logger.trace(
+                Log.setMessage "handleInitialized: sending SolutionReloadRequest..")
+
             stateActor.Post(SolutionReloadRequest (TimeSpan.FromMilliseconds(100)))
 
             logger.trace(
@@ -192,6 +195,9 @@ module Initialization =
         }
 
     let handleShutdown (context: ServerRequestContext) (_: unit) : Async<LspResult<unit>> = async {
+        logger.trace(
+            Log.setMessage "handleShutdown")
+
         context.Emit(ClientCapabilityChange None)
         context.Emit(ClientChange None)
         return LspResult.Ok()
