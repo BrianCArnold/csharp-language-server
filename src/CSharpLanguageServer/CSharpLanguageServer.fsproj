@@ -10,6 +10,7 @@
     <Authors>Saulius Menkevičius</Authors>
     <PackageOutputPath>./nupkg</PackageOutputPath>
     <PackageId>csharp-ls</PackageId>
+    <Version>1.0.1</Version>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageTags>csharp;lsp;roslyn</PackageTags>
     <PackageProjectUrl>https://github.com/razzmatazz/csharp-language-server</PackageProjectUrl>

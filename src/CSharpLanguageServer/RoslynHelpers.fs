@@ -421,11 +421,20 @@ let tryLoadSolutionFromProjectFiles
             try
                 do! msbuildWorkspace.OpenProjectAsync(file) |> Async.AwaitTask |> Async.Ignore
             with ex ->
-                logger.error (
-                    Log.setMessage "could not OpenProjectAsync('{file}'): {exception}"
-                    >> Log.addContext "file" file
-                    >> Log.addContext "ex" (string ex)
-                )
+                if ex :? AggregateException then
+                  let ae = ex :?> AggregateException
+                  for ex2 in ae.Flatten().InnerExceptions do
+                    logger.error (
+                      Log.setMessage $"SubError: {ex2}"
+                      >> Log.addContext "ex2" (string ex2)
+                    )
+                else
+
+                  logger.error (
+                      Log.setMessage $"could not OpenProjectAsync('{file}'): {ex}"
+                      >> Log.addContext "file" file
+                      >> Log.addContext "ex" (string ex)
+                  )
             let projectFile = new FileInfo(file)
             let projName = projectFile.Name
             let loaded = Interlocked.Increment(loadedProj)
